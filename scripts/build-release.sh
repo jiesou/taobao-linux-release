@@ -23,7 +23,7 @@ fetch() {
   mv "$2.part" "$2"
 }
 
-require 7z curl gh jq node npx sha256sum tar zstd
+require 7z curl jq node npx sha256sum tar zstd
 mkdir -p "$root/downloads" "$work_dir" "$output_dir"
 
 taobao_url=$(curl -fsSL --max-time 30 "$page" |
@@ -59,11 +59,7 @@ mkdir -p "$work_dir/app/node_modules/sqlite-vec-linux-x64"
 cp -a "$work_dir/vec/." "$work_dir/app/node_modules/sqlite-vec-linux-x64/"
 
 better_archive="$root/downloads/better-sqlite3-v$better_version-electron-v$better_abi-linux-x64.tar.gz"
-if [[ ! -f "$better_archive" ]]; then
-  gh release download "v$better_version" -R WiseLibs/better-sqlite3 \
-    --pattern "better-sqlite3-v$better_version-electron-v$better_abi-linux-x64.tar.gz" \
-    --dir "$root/downloads" --clobber
-fi
+fetch "https://github.com/WiseLibs/better-sqlite3/releases/download/v$better_version/$(basename "$better_archive")" "$better_archive"
 tar -xzf "$better_archive" -C "$work_dir/better-sqlite3"
 better_binary="$work_dir/better-sqlite3/build/Release/better_sqlite3.node"
 [[ -f "$better_binary" ]] || { printf '未找到 better-sqlite3 Electron/Linux prebuild\n' >&2; exit 1; }
