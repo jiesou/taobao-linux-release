@@ -2,6 +2,11 @@ name: Build release
 
 on:
   workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild and replace the payload even if this Taobao version was already released
+        type: boolean
+        default: false
   schedule:
     - cron: '17 3 * * *'
 
@@ -13,15 +18,33 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Check upstream version
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          version=$(./scripts/build-release.sh --version-only)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$FORCE" != "true" ] && gh release view "taobao-$version" >/dev/null 2>&1; then
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "Taobao $version is already released; nothing to do."
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "Building Taobao $version."
+          fi
       - name: Build payload
+        if: steps.check.outputs.build == 'true'
         run: ./scripts/build-release.sh
       - name: Read release metadata
+        if: steps.check.outputs.build == 'true'
         id: metadata
         run: |
           metadata=$(find dist -name 'taobao-linux-*.json' -print -quit)
           echo "version=$(jq -r .version "$metadata")" >> "$GITHUB_OUTPUT"
           echo "payload=$(jq -r .payload "$metadata")" >> "$GITHUB_OUTPUT"
       - name: Publish payload release
+        if: steps.check.outputs.build == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.metadata.outputs.version }}
