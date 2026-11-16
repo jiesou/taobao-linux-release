@@ -1,0 +1,33 @@
+name: Build release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build payload
+        run: ./scripts/build-release.sh
+      - name: Read release metadata
+        id: metadata
+        run: |
+          source dist/*.json
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "payload=$payload" >> "$GITHUB_OUTPUT"
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+          PAYLOAD: ${{ steps.metadata.outputs.payload }}
+        run: |
+          tag="taobao-$VERSION"
+          gh release view "$tag" >/dev/null 2>&1 || \
+            gh release create "$tag" --title "Taobao Linux $VERSION" --generate-notes
+          gh release upload "$tag" "dist/$PAYLOAD" "dist/$PAYLOAD.sha256" "dist/$PAYLOAD.size" "dist/taobao-linux-$VERSION.json" --clobber
