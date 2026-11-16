@@ -23,5 +23,5 @@ References:
 - [FlatPark build repositories](https://github.com/flatpark/flatpark/blob/main/docs/packagers/basics.md#build-repositories)
 - [FlatPark extra-data format](https://github.com/flatpark/flatpark/blob/main/docs/packagers/basics.md)
 - [Electron releases](https://github.com/electron/electron/releases)
-- [better-sqlite3 Electron prebuilds](https://github.com/WiseLibs/better-sqlite3/releases/tag/v12.11.1)
+- [better-sqlite3 releases](https://github.com/WiseLibs/better-sqlite3/releases)
 - [sqlite-vec releases](https://github.com/asg017/sqlite-vec/releases/tag/v0.1.9)
