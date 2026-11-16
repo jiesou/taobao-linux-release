@@ -2,6 +2,11 @@ name: Build release
 
 on:
   workflow_dispatch:
+    inputs:
+      rebuild:
+        description: Rebuild an already released version under a new tag
+        type: boolean
+        default: false
   schedule:
     - cron: '17 3 * * *'
 
@@ -17,16 +22,29 @@ jobs:
         id: check
         env:
           GH_TOKEN: ${{ github.token }}
+          REBUILD: ${{ inputs.rebuild }}
         run: |
           version=$(./scripts/build-release.sh --version-only)
+          tag="taobao-$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          if gh release view "taobao-$version" >/dev/null 2>&1; then
-            echo "build=false" >> "$GITHUB_OUTPUT"
-            echo "Taobao $version is already released; nothing to do."
+          if gh release view "$tag" >/dev/null 2>&1; then
+            if [ "$REBUILD" != "true" ]; then
+              echo "build=false" >> "$GITHUB_OUTPUT"
+              echo "Taobao $version is already released; nothing to do."
+              exit 0
+            fi
+
+            suffix=2
+            while gh release view "$tag-$suffix" >/dev/null 2>&1; do
+              suffix=$((suffix + 1))
+            done
+            tag="$tag-$suffix"
+            echo "Rebuilding Taobao $version as $tag."
           else
-            echo "build=true" >> "$GITHUB_OUTPUT"
             echo "Building Taobao $version."
           fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "build=true" >> "$GITHUB_OUTPUT"
       - name: Build payload
         if: steps.check.outputs.build == 'true'
         run: ./scripts/build-release.sh
@@ -42,9 +60,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.metadata.outputs.version }}
+          TAG: ${{ steps.check.outputs.tag }}
           PAYLOAD: ${{ steps.metadata.outputs.payload }}
         run: |
-          tag="taobao-$VERSION"
-          gh release create "$tag" --title "Taobao Linux $VERSION" \
+          gh release create "$TAG" --title "Taobao Linux $VERSION" \
             --notes "Linux payload built by GitHub Actions from the official Taobao Windows installer." \
             "dist/$PAYLOAD"
