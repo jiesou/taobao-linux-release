@@ -23,7 +23,7 @@ fetch() {
   mv "$2.part" "$2"
 }
 
-require 7z curl gh node npx sha256sum tar zstd
+require 7z curl gh jq node npx sha256sum tar zstd
 mkdir -p "$root/downloads" "$work_dir" "$output_dir"
 
 taobao_url=$(curl -fsSL --max-time 30 "$page" |
@@ -86,8 +86,12 @@ tar -C "$work_dir/payload" -cf - electron app.asar app.asar.unpacked |
   zstd -T0 -19 -o "$payload"
 sha256sum "$payload" > "$payload.sha256"
 stat -c '%s' "$payload" > "$payload.size"
-printf 'version=%s\nelectron=%s\npayload=%s\nsha256=%s\nsize=%s\n' \
-  "$taobao_version" "$electron_version" "$(basename "$payload")" \
-  "$(cut -d' ' -f1 "$payload.sha256")" "$(cat "$payload.size")" \
+jq -n \
+  --arg version "$taobao_version" \
+  --arg electron "$electron_version" \
+  --arg payload "$(basename "$payload")" \
+  --arg sha256 "$(cut -d' ' -f1 "$payload.sha256")" \
+  --argjson size "$(cat "$payload.size")" \
+  '{version:$version,electron:$electron,payload:$payload,sha256:$sha256,size:$size}' \
   > "$output_dir/taobao-linux-$taobao_version.json"
 printf '生成 %s\n' "$payload" >&2

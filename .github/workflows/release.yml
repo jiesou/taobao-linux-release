@@ -18,9 +18,9 @@ jobs:
       - name: Read release metadata
         id: metadata
         run: |
-          source dist/*.json
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "payload=$payload" >> "$GITHUB_OUTPUT"
+          metadata=$(find dist -name 'taobao-linux-*.json' -print -quit)
+          echo "version=$(jq -r .version "$metadata")" >> "$GITHUB_OUTPUT"
+          echo "payload=$(jq -r .payload "$metadata")" >> "$GITHUB_OUTPUT"
       - name: Publish payload release
         env:
           GH_TOKEN: ${{ github.token }}

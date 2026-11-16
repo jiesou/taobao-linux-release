@@ -7,7 +7,7 @@ The source application is the official Taobao Windows installer. The build downl
 - `sqlite-vec-linux-x64` `0.1.9`
 - the official `better-sqlite3` Electron ABI 136 prebuild
 
-The build does not compile Electron or native modules and does not run npm during Flatpak installation.
+The build does not compile Electron or native modules and does not run npm during Flatpak installation. The Taobao version is resolved from the official update page on every CI run; the workflow creates or updates the matching `taobao-<version>` Release. No generated payload or installer is committed to this repository.
 
 ## Build
 
