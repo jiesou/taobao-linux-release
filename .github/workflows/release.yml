@@ -21,13 +21,15 @@ jobs:
           source dist/*.json
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "payload=$payload" >> "$GITHUB_OUTPUT"
-      - name: Publish release
+      - name: Publish payload release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.metadata.outputs.version }}
           PAYLOAD: ${{ steps.metadata.outputs.payload }}
         run: |
           tag="taobao-$VERSION"
-          gh release view "$tag" >/dev/null 2>&1 || \
-            gh release create "$tag" --title "Taobao Linux $VERSION" --generate-notes
-          gh release upload "$tag" "dist/$PAYLOAD" "dist/$PAYLOAD.sha256" "dist/$PAYLOAD.size" "dist/taobao-linux-$VERSION.json" --clobber
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --title "Taobao Linux $VERSION" \
+              --notes "Linux payload built by GitHub Actions from the official Taobao Windows installer."
+          fi
+          gh release upload "$tag" "dist/$PAYLOAD" --clobber
