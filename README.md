@@ -2,12 +2,9 @@
 
 This repository builds the Linux payload used by the FlatPark package for Taobao Desktop.
 
-The source application is the official Taobao Windows installer. The build downloads the official Linux Electron runtime, applies the Linux renderer/runtime patches in this repository, and replaces Windows native modules with Linux binaries:
+The source application is the official Taobao Windows installer. The build downloads the official Linux Electron runtime, applies the Linux renderer/runtime patches in this repository, and replaces Windows native modules with Linux binaries.
 
-- `sqlite-vec-linux-x64` `0.1.9`
-- the official `better-sqlite3` Electron ABI 136 prebuild
-
-The build does not compile Electron or native modules and does not run npm during Flatpak installation. The Taobao version is resolved from the official update page on every CI run; the workflow creates or updates the matching `taobao-<version>` Release. No generated payload or installer is committed to this repository.
+The build reads Electron, `better-sqlite3`, and `sqlite-vec` versions from the unpacked Taobao app. It reads Electron's `NODE_MODULE_VERSION` from the matching official Electron headers, then downloads the corresponding official Linux prebuilds. If a matching prebuild is unavailable, the build fails clearly rather than guessing or compiling a different ABI. It does not compile Electron or native modules and does not run npm during Flatpak installation. The Taobao version is resolved from the official update page on every CI run; unchanged versions are skipped unless a manual run sets `force=true`. No generated payload or installer is committed to this repository.
 
 ## Build
 
