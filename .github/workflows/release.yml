@@ -2,11 +2,6 @@ name: Build release
 
 on:
   workflow_dispatch:
-    inputs:
-      force:
-        description: Rebuild and replace the payload even if this Taobao version was already released
-        type: boolean
-        default: false
   schedule:
     - cron: '17 3 * * *'
 
@@ -22,11 +17,10 @@ jobs:
         id: check
         env:
           GH_TOKEN: ${{ github.token }}
-          FORCE: ${{ inputs.force }}
         run: |
           version=$(./scripts/build-release.sh --version-only)
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          if [ "$FORCE" != "true" ] && gh release view "taobao-$version" >/dev/null 2>&1; then
+          if gh release view "taobao-$version" >/dev/null 2>&1; then
             echo "build=false" >> "$GITHUB_OUTPUT"
             echo "Taobao $version is already released; nothing to do."
           else
@@ -51,8 +45,6 @@ jobs:
           PAYLOAD: ${{ steps.metadata.outputs.payload }}
         run: |
           tag="taobao-$VERSION"
-          if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --title "Taobao Linux $VERSION" \
-              --notes "Linux payload built by GitHub Actions from the official Taobao Windows installer."
-          fi
-          gh release upload "$tag" "dist/$PAYLOAD" --clobber
+          gh release create "$tag" --title "Taobao Linux $VERSION" \
+            --notes "Linux payload built by GitHub Actions from the official Taobao Windows installer." \
+            "dist/$PAYLOAD"
