@@ -70,3 +70,10 @@ jobs:
           gh release create "$TAG" --title "Taobao Linux $VERSION" \
             --notes "Linux payload built by GitHub Actions from the official Taobao Windows installer." \
             "dist/$PAYLOAD"
+      - name: Notify Flatpark
+        if: steps.check.outputs.build == 'true'
+        uses: flatpark/publish-action@v1
+        continue-on-error: true
+        with:
+          app-id: com.taobao.Taobao.Desktop
+          tag: ${{ steps.check.outputs.tag }}
