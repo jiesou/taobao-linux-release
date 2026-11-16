@@ -21,7 +21,6 @@ if (process.platform === 'linux' && process.versions.electron && process.type ==
 }
 
 function patchTray({ Tray, nativeImage }) {
-
   const icon = nativeImage
     .createFromPath('/app/share/icons/hicolor/256x256/apps/com.taobao.Taobao.Desktop.png')
     .resize({ width: 32, height: 32 })
@@ -39,14 +38,21 @@ function patchTray({ Tray, nativeImage }) {
     if (menu) this.setContextMenu(menu)
   }
 
-  // 客户端只在点击后才组装菜单，先替用户点一下，让菜单在托盘出现时就绪。
+  primeMenuOnFirstTooltip(Tray)
+}
+
+function primeMenuOnFirstTooltip(Tray) {
+  const primedTrays = new WeakSet()
   const setToolTip = Tray.prototype.setToolTip
+
   Tray.prototype.setToolTip = function (toolTip) {
     const result = setToolTip.call(this, toolTip)
-    if (!this.__menuPrimed) {
-      this.__menuPrimed = true
-      setTimeout(() => this.emit('click'), 0)
-    }
+    if (primedTrays.has(this)) return result
+
+    primedTrays.add(this)
+    // Linux does not deliver the client’s expected tray click during setup.
+    // Prime the menu once, after the tray has been created.
+    setTimeout(() => this.emit('click'), 0)
     return result
   }
 }
